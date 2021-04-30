@@ -300,3 +300,46 @@ Fields are defined in the fields element of `schema.xml`. Once you have the fiel
 
 ##### Copying fields
 
+You might want to interpret some document fields in more than one way. Solr has a mechanism for making copies of fields so that you can apply several distinct field types to a single piece of incoming information.
+
+```
+<copyField source="cat" dest="text" maxChars="30000" />
+```
+
+A common usage for this functionality is to create a single "search" field that will serve as the default query field when users or clients do not specify a field to query. For example, `title`, `author`, `keywords`, and `body` may all be fields that should be searched by default, with copy field rules for each field to copy to a `catchall` field
+
+Later you can set a rule in `solrconfig.xml` to search the `catchall` field by default. 
+
+The `maxChars` parameter, an `int` parameter, establishes an upper limit for the number of characters to be copied from the source value when constructing the value added to the destination field. This limit is useful for situations in which you want to copy some data from the source field, but also control the size of index files.
+
+##### Dynamic fields
+
+*Dynamic fields* allow Solr to index fields that you did not explicitly define in your schema.
+
+##### Unique keys
+
+The `uniqueKey` element specifies which field is a unique identifier for documents.
+
+```
+<uniqueKey>id</uniqueKey>
+```
+
+
+
+
+
+##### Overall structure of schema.xml
+
+At the highest level, `schema.xml` is structured as follows.
+
+This example is not real XML, but it gives you an idea of the structure of the file.
+
+```xml
+<schema>
+  <types>
+  <fields>
+  <uniqueKey>
+  <copyField>
+</schema>
+```
+
