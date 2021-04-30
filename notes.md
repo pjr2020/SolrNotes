@@ -134,5 +134,169 @@ bin/solr start -h search.mysolr.com
 
 -z <zkhost> bin/solr start -c -z server1:2181,server2:2181
 
+##### Stop
 
+-p <port>
+
+-all
+
+-key <key>
+
+##### Version
+
+##### Status
+
+The `status` command displays basic JSON-formatted information for any Solr nodes found running on the local system.
+
+##### Assert
+
+The `assert` command sanity checks common issues with Solr installations.
+
+##### Healthcheck
+
+The `healthcheck` command generates a JSON-formatted health report for a collection when running in SolrCloud mode
+
+-c collection
+
+-z zookeeper host
+
+##### Collections and cores
+
+The `create` command detects the mode that Solr is running in (standalone or SolrCloud) and then creates a core or collection depending on the mode.
+
+-c name
+
+-d confdir 
+
+-n configname This defaults to the same name as the core or collection.
+
+-p port
+
+-s shards
+
+-rf <replicas> or -replicationFactor
+
+##### Configuration Directories and SolrCloud
+
+Before creating a collection in SolrCloud, the configuration directory used by the collection must be uploaded to ZooKeeper.
+
+delete core or collection
+
+##### Authentication
+
+```
+bin/solr auth enable
+```
+
+```
+-credentials
+```
+
+The username and password in the format of `username:password` of the initial user.
+
+```
+-blockUnknown
+```
+
+When **true**, blocks all unauthenticated users from accessing Solr. This defaults to **false**, which means unauthenticated users will still be able to access Solr.
+
+##### Set or Unset Configuration Properties
+
+-name -action -property -value -z(ookeeper) -p(ort)
+
+#### Solr configuration files
+
+Solr has several configuration files that you will interact with during your implementation.
+
+Many of these files are in XML format, although APIs that interact with configuration settings tend to accept JSON for programmatic access as needed.
+
+*Standalone Mode crucial files*
+
+```
+<solr-home-directory>/
+   solr.xml
+   core_name1/
+      core.properties
+      conf/
+         solrconfig.xml
+         managed-schema
+      data/
+   core_name2/
+      core.properties
+      conf/
+         solrconfig.xml
+         managed-schema
+      data/
+```
+
+- `solr.xml` specifies configuration options for your Solr server instance. For more information on `solr.xml` see [Solr Cores and solr.xml](https://solr.apache.org/guide/8_8/solr-cores-and-solr-xml.html#solr-cores-and-solr-xml).
+- Per Solr Core:
+  - `core.properties` defines specific properties for each core such as its name, the collection the core belongs to, the location of the schema, and other parameters. For more details on `core.properties`, see the section [Defining core.properties](https://solr.apache.org/guide/8_8/defining-core-properties.html#defining-core-properties).
+  - `solrconfig.xml` controls high-level behavior. You can, for example, specify an alternate location for the data directory. For more information on `solrconfig.xml`, see [Configuring solrconfig.xml](https://solr.apache.org/guide/8_8/configuring-solrconfig-xml.html#configuring-solrconfig-xml).
+  - `managed-schema` (or `schema.xml` instead) describes the documents you will ask Solr to index. The Schema define a document as a collection of fields. You get to define both the field types and the fields themselves. Field type definitions are powerful and include information about how Solr processes incoming field values and query values. For more information on Solr Schemas, see [Documents, Fields, and Schema Design](https://solr.apache.org/guide/8_8/documents-fields-and-schema-design.html#documents-fields-and-schema-design) and the [Schema API](https://solr.apache.org/guide/8_8/schema-api.html#schema-api).
+  - `data/` The directory containing the low level index files.
+
+#### Taking Solr to Production
+
+Solr includes a service installation script (`bin/install_solr_service.sh`) to help you install Solr as a service on Linux
+
+We recommend separating your live Solr files, such as logs and index files, from the files included in the Solr distribution bundle, as that makes it easier to upgrade Solr and is considered a good practice to follow as a system administrator.
+
+separate writable files? -d to change directory
+
+-u to set username
+
+```bash
+tar xzf solr-8.8.0.tgz solr-8.8.0/bin/install_solr_service.sh --strip-components=2
+```
+
+#### Documents fields and schemas
+
+Solr’s basic unit of information is a *document*, which is a set of data that describes something
+
+documents are composed of *fields*, which are more specific pieces of information
+
+You can tell Solr about the kind of data a field contains by specifying its *field type*. The field type tells Solr how to interpret the field and how it can be queried.
+
+*Field analysis* tells Solr what to do with incoming data when building an index.
+
+Solr stores details about the field types and fields it is expected to understand in a schema file
+
+`managed-schema` is the name for the schema file Solr uses by default to support making Schema changes at runtime via the [Schema API](https://solr.apache.org/guide/8_8/schema-api.html#schema-api), or [Schemaless Mode](https://solr.apache.org/guide/8_8/schemaless-mode.html#schemaless-mode) features. the contents of the files are still updated automatically by Solr.
+
+`schema.xml` is the traditional name for a schema file which can be edited manually by users who use the [`ClassicIndexSchemaFactory`](https://solr.apache.org/guide/8_8/schema-factory-definition-in-solrconfig.html#schema-factory-definition-in-solrconfig)
+
+##### Solr field types
+
+A field type defines the analysis that will occur on a field when documents are indexed or queries are sent to the index.
+
+A field type definition can include four types of information:
+
+- The name of the field type (mandatory).
+- An implementation class name (mandatory).
+- If the field type is `TextField`, a description of the field analysis for the field type.
+- Field type properties - depending on the implementation class, some properties may be mandatory
+
+Field types are defined in `schema.xml`. Each field type is defined between `fieldType` elements. They can optionally be grouped within a `types` element. Here is an example of a field type definition for a type called `text_general`
+
+```
+<fieldType name="text_general" class="solr.TextField" positionIncrementGap="100"> 
+  <analyzer type="index"> 
+```
+
+The rest of the definition is about field analysis
+
+The field type `class` determines most of the behavior of a field type, but optional properties can also be defined. For example, the following definition of a date field type defines two properties, `sortMissingLast` and `omitNorms`.
+
+general properties: name, class, ...
+
+##### Fields
+
+Fields are defined in the fields element of `schema.xml`. Once you have the field types set up, defining the fields themselves is simple.
+
+```
+<field name="price" type="float" default="0.0" indexed="true" stored="true"/>
+```
+
+##### Copying fields
 
