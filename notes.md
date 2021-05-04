@@ -343,3 +343,55 @@ This example is not real XML, but it gives you an idea of the structure of the f
 </schema>
 ```
 
+
+
+
+
+### React Router
+
+Features like browser history, bookmarks, and forward and back buttons will not work without a routing solution.
+
+sitemap to define the structure of web pages
+
+React Router DOM is used for regular React applications that use the DOM. If you’re writing an app for React Native, you’ll use `react-router-native`.
+
+The `Router` component passes information about the current location to any children that are nested inside of it. 
+
+```react 
+import { BrowserRouter as Router } from "react-router-dom";
+<Router>
+    <App />
+</Router>
+```
+
+configuring routes
+
+```react
+import { Routes, Route } from "react-router-dom";
+return(    
+    <div>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route
+          path="/about"
+          element={<About />}
+        />
+        <Route
+          path="/events"
+          element={<Events />}
+        />
+        <Route
+          path="/products"
+          element={<Products />}
+        />
+        <Route
+          path="/contact"
+          element={<Contact />}
+        />
+      </Routes>
+    </div>
+);
+```
+
+Each `Route` component has `path` and `element` properties. When the browser’s location matches the `path`, the `element` will be displayed. 
+
