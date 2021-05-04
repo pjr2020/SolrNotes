@@ -388,10 +388,169 @@ return(
           path="/contact"
           element={<Contact />}
         />
+        <Route path="*" element={<Whoops404 />} />
       </Routes>
     </div>
 );
 ```
 
 Each `Route` component has `path` and `element` properties. When the browser’s location matches the `path`, the `element` will be displayed. 
+
+creating links
+
+```react
+import { Link } from "react-router-dom";
+
+export function Home() {
+  return (
+    <div>
+      <h1>[Company Website]</h1>
+      <nav>
+        <Link to="about">About</Link>
+        <Link to="events">Events</Link>
+        <Link to="products">Products</Link>
+        <Link to="contact">Contact Us</Link>
+      </nav>
+    </div>
+  );
+}
+```
+
+getting current location from hooks
+
+```react
+let location = useLocation();
+{location.pathname}
+```
+
+creating a page hierarchy
+
+```react
+<Route path="about" element={<About />}>
+     <Route
+        path="services"
+        element={<Services />}
+     />
+
+     <Route
+        path="history"
+        element={<History />}
+     />
+     <Route
+        path="location"
+        element={<Location />}
+     />
+</Route>
+```
+
+In order to get component `history` to display, we’ll use another feature of React Router DOM: the `Outlet` component.
+
+`Outlet` will let us render these nested components. We’ll just place it anywhere we want to render child content.
+
+```react
+import {
+  Link,
+  useLocation,
+  Outlet
+} from "react-router-dom";
+
+export function About() {
+  return (
+    <div>
+      <h1>[About]</h1>
+      <Outlet />
+    </div>
+  );
+}
+```
+
+redirect
+
+```react
+<Routes>
+        <Route path="/" element={<Home />} />
+        // Other Routes
+        <Redirect
+          from="services"
+          to="about/services"
+        />
+</Routes>
+```
+
+
+
+useRoute to create routes with hooks
+
+```react
+import { useRoutes } from "react-router-dom";
+let element = useRoutes([
+    { path: "/", element: <Home /> },
+    ...
+]);
+return element;
+```
+
+
+
+Routing parameters
+
+Another useful feature of the React Router is the ability to set up *routing parameters*. Routing parameters are variables that obtain their values from the URL.
+
+```react
+<Routes>
+        <Route
+          path="/"
+          element={<ColorList />}
+        />
+        <Route
+          path=":id"
+          element={<ColorDetails />}
+        />
+</Routes>
+
+import React from "react";
+import { useParams } from "react-router-dom";
+
+export function ColorDetails() {
+  let params = useParams();
+    let { id } = useParams();
+  let { colors } = useColors();
+  let foundColor = colors.find(
+    color => color.id === id
+  );
+  console.log(params);
+  return (
+    <div>
+      <h1>Details</h1>
+    </div>
+  );
+}
+```
+
+hook to navigate
+
+```react
+let navigate = useNavigate();
+
+return (
+  <section
+    className="color"
+    onClick={() => navigate(`/${id}`)}
+  >
+    // Color component
+  </section>
+);
+```
+
+### React and server
+
+React can be rendered *isomorphically*, which means that it can be in platforms other than the browser. This means we can render our UI on the server before it ever gets to the browser.
+
+*Isomorphic* applications are applications that can be rendered on multiple platforms. *Universal* code means that the exact same code can run in multiple environments.
+
+Node.js will allow us to reuse the same code we’ve written in the browser in other applications such as servers, CLIs, and even native applications.
+
+```react
+let html = ReactDOM.renderToString(<Star />);
+```
 
