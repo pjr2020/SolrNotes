@@ -347,6 +347,87 @@ This example is not real XML, but it gives you an idea of the structure of the f
 
 
 
+#### Flask
+
+ The “micro” in microframework means Flask aims to keep the core simple but extensible.
+
+
+
+#### Docker
+
+Simply put, a container is simply another process on your machine that has been isolated from all other processes on the host machine. That isolation leverages [kernel namespaces and cgroups](https://medium.com/@saschagrunert/demystifying-containers-part-i-kernel-space-2c53d6979504), features that have been in Linux for a long time. Docker has worked to make these capabilities approachable and easy to use.
+
+When running a container, it uses an isolated filesystem. This custom filesystem is provided by a **container image**. Since the image contains the container’s filesystem, it must contain everything needed to run an application - all dependencies, configuration, scripts, binaries, etc. The image also contains other configuration for the container, such as environment variables, a default command to run, and other metadata.
+
+##### Building an APP with docker
+
+first, download the app contents
+
+next build the app's container image
+
+```
+ # syntax=docker/dockerfile:1
+ FROM node:12-alpine
+ RUN apk add --no-cache python g++ make
+ WORKDIR /app
+ COPY . .
+ RUN yarn install --production
+ CMD ["node", "src/index.js"]
+```
+
+then build the container image
+
+```
+docker build -t getting-started .
+docker image ls
+```
+
+finally start the container
+
+```
+ docker run -dp 3000:3000 getting-started
+```
+
+-d for detached mode, -p for port mapping
+
+##### Updating the APP
+
+We need to remove the old container first before adding a new one
+
+```
+docker ps #to view the container list
+docker stop <container-id> #to stop a container
+docker remove <contrainer-id> #to erase a container or use docker rm -f <container-id>
+```
+
+then build the new image and start the new app
+
+or?
+
+##### Docker Hub to share application
+
+docker hub is the default registry for docker
+
+docker id required
+
+to push an image to docker hub
+
+```
+docker login -u Your-Username
+docker tag getting-started YOUR-USER-NAME/getting-started #add tag
+docker push YOUR-USER-NAME/getting-started
+```
+
+play-with-docker: a sandbox platform for docker
+
+##### Persisting the database
+
+
+
+
+
+
+
 ### React Router
 
 Features like browser history, bookmarks, and forward and back buttons will not work without a routing solution.
