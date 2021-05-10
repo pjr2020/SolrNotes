@@ -351,6 +351,30 @@ This example is not real XML, but it gives you an idea of the structure of the f
 
  The “micro” in microframework means Flask aims to keep the core simple but extensible.
 
+```python
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def hello_world():
+    return 'Hello, World!'
+```
+
+import Flask class, \_\_name\_\_ to decide whether it's started as an application or imported as module.
+
+route() decorator to tell Flask what URL should trigger the function
+
+```
+$ export FLASK_APP=hello.py
+$ flask run
+ * Running on http://127.0.0.1:5000/
+ 
+ set FLASK_APP=hello.py #windows
+ $env:FLASK_APP = "hello.py" #powershell
+```
+
+
+
 
 
 #### Docker
@@ -422,9 +446,72 @@ play-with-docker: a sandbox platform for docker
 
 ##### Persisting the database
 
+containers have isolated file systems
 
+```
+docker run -d ubuntu bash -c "shuf -i 1-10000 -n 1 -o /data.txt && tail -f /dev/null"
+docker exec <container-id> cat /data.txt
+```
 
+container volumes can provide the ability to connect specific filesystem paths of the container back to the host machine.
 
+named volume and bind mount and more
+
+create a volume 
+
+```
+ docker volume create todo-db
+```
+
+start the container with -v flag
+
+```
+ docker run -dp 3000:3000 -v todo-db:/etc/todos getting-started
+```
+
+to check volume storage location on the host
+
+```
+docker volume inspect todo-db
+```
+
+with bind mounts, we control the exact mountpoint on host. It can also be used to provide additional data into containers
+
+- Mount our source code into the container
+- Install all dependencies, including the “dev” dependencies
+- Start nodemon to watch for filesystem changes
+
+```
+ docker run -dp 3000:3000 \
+     -w /app -v "$(pwd):/app" \
+     node:12-alpine \
+     sh -c "yarn install && yarn run dev"
+```
+
+##### Multi container apps
+
+each container in general should do one thing, run one process
+
+If two containers are on the same network, they can talk to each other
+
+There are two ways to put a container on a network: 1) Assign it at start or 2) connect an existing container
+
+create the network
+
+```
+ docker network create todo-app
+```
+
+start 
+
+```
+ docker run -d \
+     --network todo-app --network-alias mysql \
+     -v todo-mysql-data:/var/lib/mysql \
+     -e MYSQL_ROOT_PASSWORD=secret \
+     -e MYSQL_DATABASE=todos \
+     mysql:5.7
+```
 
 
 
