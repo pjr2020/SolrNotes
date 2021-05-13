@@ -373,7 +373,212 @@ $ flask run
  $env:FLASK_APP = "hello.py" #powershell
 ```
 
+##### routing
 
+```python
+@app.route('/hello')
+def hello():
+    return 'Hello, World'
+```
+
+Use the route() decorator to bind a function to a URL.
+
+You can add variable sections to a URL by marking sections with `<variable_name>`. Your function then receives the `<variable_name>` as a keyword argument. Optionally, you can use a converter to specify the type of the argument like `<converter:variable_name>`.
+
+```python
+@app.route('/post/<int:post_id>')
+def show_post(post_id):
+    # show the post with the given id, the id is an integer
+    return 'Post %d' % post_id
+
+@app.route('/path/<path:subpath>')
+def show_subpath(subpath):
+    # show the subpath after /path/
+    return 'Subpath %s' % escape(subpath)
+```
+
+Converter types
+
+| `string` | (default) accepts any text without a slash |
+| -------- | ------------------------------------------ |
+| `int`    | accepts positive integers                  |
+| `float`  | accepts positive floating point values     |
+| `path`   | like `string` but also accepts slashes     |
+| `uuid`   | accepts UUID strings                       |
+
+##### Unique URLs/ Redirection 
+
+If you access the URL without a trailing slash, Flask redirects you to the canonical URL with the trailing slash.
+
+##### URL Building
+
+To build a URL to a specific function, use the [`url_for()`](https://flask.palletsprojects.com/en/1.1.x/api/#flask.url_for) function. It accepts the name of the function as its first argument and any number of keyword arguments, each corresponding to a variable part of the URL rule. Unknown variable parts are appended to the URL as query parameters.
+
+1. You can change your URLs in one go instead of needing to remember to manually change hard-coded URLs.
+2. URL building handles escaping of special characters and Unicode data transparently.
+3. The generated paths are always absolute, avoiding unexpected behavior of relative paths in browsers.
+
+```python
+from markupsafe import escape
+@app.route('/user/<username>')
+def profile(username):
+    return '{}\'s profile'.format(escape(username))
+```
+
+##### HTTP methods
+
+You can use the `methods` argument of the route() decorator to  handle different HTTP methods.
+
+```python
+from flask import request
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        return do_the_login()
+    else:
+        return show_the_login_form()
+```
+
+##### Static files
+
+ create a folder called `static` in your package or next to your module and it will be available at `/static` on the application.
+
+```
+url_for('static', filename='style.css') #to generate URLs for static files
+```
+
+To render a template you can use the render_template()  # from jinja2
+
+```python
+from flask import render_template
+
+@app.route('/hello/')
+@app.route('/hello/<name>')
+def hello(name=None):
+    return render_template('hello.html', name=name)
+```
+
+Flask will look for templates in the `templates` folder.
+
+```html
+<!doctype html>
+<title>Hello from Flask</title>
+{% if name %}
+  <h1>Hello {{ name }}!</h1>
+{% else %}
+  <h1>Hello, World!</h1>
+{% endif %}
+```
+
+Inside templates you also have access to the request, session and g 1 objects as well as the get_flashed_messages() function.
+
+##### Accessing request data with context locals
+
+```python
+from flask import request
+@app.route('/login', methods=['POST', 'GET'])
+def login():
+    error = None
+    if request.method == 'POST':
+        if valid_login(request.form['username'],
+                       request.form['password']):
+            return log_the_user_in(request.form['username'])
+        else:
+            error = 'Invalid username/password'
+    # the code below is executed if the request method
+    # was GET or the credentials were invalid
+    return render_template('login.html', error=error)
+```
+
+To access parameters submitted in the URL (`?key=value`) you can use the [`args`](https://flask.palletsprojects.com/en/1.1.x/api/#flask.Request.args) attribute:
+
+```
+searchword = request.args.get('key', '')
+```
+
+Each uploaded file is stored in that dictionary. It behaves just like a standard Python `file` object, but it also has a [`save()`](https://werkzeug.palletsprojects.com/en/1.0.x/datastructures/#werkzeug.datastructures.FileStorage.save)hat allows you to store that file on the filesystem of the server. 
+
+```python
+from flask import request
+from werkzeug.utils import secure_filename
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        f = request.files['the_file']
+        f.save('/var/www/uploads/uploaded_file.txt')
+        f.save('/var/www/uploads/' + secure_filename(f.filename))
+```
+
+##### Cookies
+
+```python
+from flask import make_response
+
+@app.route('/xxx')
+def index():
+    resp = make_response(render_template(...))
+    resp.set_cookie('username', 'the username')
+    return resp
+    
+@app.route('/')
+def index():
+    username = request.cookies.get('username')
+    # use cookies.get(key) instead of cookies[key] to not get a
+    # KeyError if the cookie is missing.
+```
+
+##### Redirect
+
+```python
+from flask import abort, redirect, url_for
+
+@app.route('/')
+def index():
+    return redirect(url_for('login'))
+
+@app.route('/login')
+def login():
+    abort(401)
+    this_is_never_executed()
+    
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('page_not_found.html'), 404
+```
+
+The return value from a view function is automatically converted into a response object for you. If the return value is a string it’s converted into a response object with the string as response body, a `200 OK` status code and a *text/html* mimetype. If the return value is a dict, `jsonify()` is called to produce a response. 
+
+jsonify to convert it explicitly
+
+#### Postman
+
+
+
+
+
+
+
+
+
+#### Conda
+
+```
+conda create --name myenv python=3.6 scipy=0.15.0
+conda create --name myclone --clone myenv
+conda create --name myenv --file spec-file.txt
+conda install --name myenv --file spec-file.txt
+conda env export > environment.yml
+conda env create -f environment.yml
+conda env list
+conda list --explicit
+conda list --explicit > spec-file.txt
+conda activate ...
+conda deactivate ...
+conda list --revisions
+conda install --revision=REVNUM or conda install --rev REVNUM
+conda remove --name myenv --all
+```
 
 
 
@@ -502,7 +707,7 @@ create the network
  docker network create todo-app
 ```
 
-start 
+start MySQL container and attach it to the network
 
 ```
  docker run -d \
@@ -512,6 +717,269 @@ start
      -e MYSQL_DATABASE=todos \
      mysql:5.7
 ```
+
+--network-alias?
+
+To connect to the MySQL container, we’re going to make use of the `nicolaka/netshoot` container, which ships with a *lot* of tools that are useful for troubleshooting or debugging networking issues
+
+```
+docker run -it --network todo-app nicolaka/netshoot
+```
+
+Inside the container, we’re going to use the `dig` command, which is a useful DNS tool. We’re going to look up the IP address for the hostname `mysql`
+
+```
+ dig mysql
+```
+
+connect the app with mysql
+
+```
+ docker run -dp 3000:3000 \
+   -w /app -v "$(pwd):/app" \
+   --network todo-app \
+   -e MYSQL_HOST=mysql \
+   -e MYSQL_USER=root \
+   -e MYSQL_PASSWORD=secret \
+   -e MYSQL_DB=todos \
+   node:12-alpine \
+   sh -c "yarn install && yarn run dev"
+   
+docker logs <container-id>
+```
+
+##### Docker compose
+
+[Docker Compose](https://docs.docker.com/compose/) is a tool that was developed to help define and share multi-container applications.
+
+define version and services(or containers) in docker-compose.yml
+
+```
+ version: "3.7"
+
+ services:
+   app:
+     image: node:12-alpine
+     command: sh -c "yarn install && yarn run dev"
+     ports:
+        - 3000:3000
+     working_dir: /app
+     volumes:
+       - ./:/app
+     environment:
+       MYSQL_HOST: mysql
+       MYSQL_USER: root
+       MYSQL_PASSWORD: secret
+       MYSQL_DB: todos
+   mysql:
+       image:mysql:5.7
+       volumes:
+         - todo-mysql-data:/var/lib/mysql
+       environment:
+          MYSQL_ROOT_PASSWORD:secret
+          MYSQL_DATABASE:todos
+   volumes:
+       todo-mysql-data
+```
+
+the service name will automatically become a network alias
+
+commands, ports, working_dir and volumes and environment variables can also be defined in the file
+
+then run the application stack
+
+```
+docker-compose up -d
+docker-compose logs -f
+```
+
+-d means run everything in the background
+
+a network will be automatically created
+
+```
+docker-compose down
+```
+
+to tear it down, --volumes to also remove volumes
+
+##### Image building Best practices
+
+When you have built an image, it is good practice to scan it for security vulnerabilities using the `docker scan` command.
+
+Use the `docker image history` command to see the layers in the `getting-started` image you created earlier in the tutorial.
+
+```
+ docker image history --no-trunc getting-started
+```
+
+we need to restructure our Dockerfile to help support the caching of the dependencies. For Node-based applications, those dependencies are defined in the `package.json` file.
+
+#### Docker building python projects
+
+shell and exec forms
+
+RUN, CMD and ENTRYPOINT can be specified in shell form or exec form.
+
+shell form:
+
+```
+<instruction>   <command>
+RUN apt-get install python3
+```
+
+Exec form:
+
+```
+<instruction> ["executable","param1"."param2"]
+RUN ["apt-get","install","python3"]
+```
+
+in exec form shell processing doesn't happen
+
+RUN instruction allows you to install your application and packages requited for it. It executes any commands on top of the current image and creates a new layer by committing the results.
+
+CMD instruction allows you to set a *default* command, which will be executed only when you run container without specifying a command. If Docker container runs with a command, the default command will be ignored. If Dockerfile has more than one CMD instruction, all but last CMD instructions are ignored.
+
+ENTRYPOINT instruction allows you to configure a container that will run as an executable.
+
+It looks similar to CMD, because it also allows you to specify a command with parameters. The difference is ENTRYPOINT command and parameters are not ignored when Docker container runs with command line parameters.
+
+
+
+
+
+##### Building an image
+
+Dockerfile in the root of the working directory for instructions in building images
+
+```
+# syntax=docker/dockerfile:1
+```
+
+instructs the Docker builder what syntax to use when parsing the Dockerfile
+
+```
+FROM python:3.8-slim-buster
+```
+
+defines the base image to use in the application (official Python image that already has all the tools and packages that we need to run a Python application)
+
+```
+WORKDIR /app
+```
+
+defines the working directory for Docker to use as the default location for all subsequent commands
+
+Usually, the very first thing you do once you’ve downloaded a project written in Python is to install `pip` packages.
+
+Before we can run `pip3 install`, we need to get our `requirements.txt` file into our image. We’ll use the `COPY` command to do this. The `COPY` command takes two parameters. The first parameter tells Docker what file(s) you would like to copy into the image. The second parameter tells Docker where you want that file(s) to be copied to. We’ll copy the `requirements.txt` file into our working directory `/app`.
+
+```
+COPY requirements.txt requirements.txt
+```
+
+```
+RUN pip3 install -r requirements.txt
+```
+
+to install dependencies
+
+```
+COPY . .
+```
+
+copy all the files (including source code) located in the current directory into the image
+
+```
+CMD [ "python3", "-m" , "flask", "run", "--host=0.0.0.0"]
+```
+
+run when the image is executed inside a container
+
+--host=0.0.0.0 to make the application externally visible
+
+```
+python-docker
+|____ app.py
+|____ requirements.txt
+|____ Dockerfile
+```
+
+↑Directory structure
+
+building the image
+
+```
+docker build --tag python-docker .
+```
+
+The `docker build` command builds Docker images from a Dockerfile and a “context”. A build’s context is the set of files located in the specified PATH or URL. The Docker build process can access any of the files located in this context.
+
+--tag to set the name of the image, name:tag format, latest as the default tag
+
+```
+docker images
+```
+
+to list all images
+
+```
+$ docker tag python-docker:latest python-docker:v1.0.0
+```
+
+to create a second tag for the image
+
+```
+docker rmi python-docker:v1.0.0
+```
+
+removing an image
+
+##### Running containers
+
+A container is a normal operating system process except that this process is isolated in that it has its own file system, its own networking, and its own isolated process tree separate from the host.
+
+To run an image inside of a container, we use the `docker run` command.
+
+```
+$ docker run python-docker
+```
+
+To publish a port for our container, we’ll use the `--publish flag` (`-p` for short) on the `docker run` command.
+
+The format of the `--publish` command is `[host port]:[container port]`.
+
+running in detached mode
+
+Docker can run your container in detached mode or in the background
+
+```
+docker run -d -p 5000:5000 --name rest-server python-docker
+```
+
+```
+docker ps -a
+```
+
+to list containers
+
+containers can be stopped, started and restarted, --all/-a for all containers, rm to remove containers
+
+Docker generated a random name if you don't name the container.
+
+--name to add a name
+
+##### Develop an app
+
+```
+$ docker volume create mysql
+$ docker volume create mysql_config
+```
+
+volumes to persist data
+
+
 
 
 
