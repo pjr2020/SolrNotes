@@ -979,7 +979,174 @@ $ docker volume create mysql_config
 
 volumes to persist data
 
+create a network that our application and database will use to talk to each other. The network is called a user-defined bridge network and gives us a nice DNS lookup service which we can use when creating our connection string.
 
+```
+$ docker network create mysqlnet
+```
+
+```
+$ docker run --rm -d -v mysql:/var/lib/mysql \
+  -v mysql_config:/etc/mysql -p 3306:3306 \
+  --network mysqlnet \
+  --name mysqldb \
+  -e MYSQL_ROOT_PASSWORD=p@ssw0rd1 \
+  mysql
+```
+
+```
+docker exec -it mysqldb mysql -u root -p
+```
+
+```python
+@app.route('/widgets')
+def get_widgets() :
+  mydb = mysql.connector.connect(
+    host="mysqldb",
+    user="root",
+    password="p@ssw0rd1",
+    database="inventory"
+  )
+  cursor = mydb.cursor()
+
+
+  cursor.execute("SELECT * FROM widgets")
+
+  row_headers=[x[0] for x in cursor.description] #this will extract row headers
+
+  results = cursor.fetchall()
+  json_data=[]
+  for result in results:
+    json_data.append(dict(zip(row_headers,result)))
+
+  cursor.close()
+
+  return json.dumps(json_data)
+
+@app.route('/initdb')
+def db_init():
+  mydb = mysql.connector.connect(
+    host="mysqldb",
+    user="root",
+    password="p@ssw0rd1"
+  )
+  cursor = mydb.cursor()
+
+  cursor.execute("DROP DATABASE IF EXISTS inventory")
+  cursor.execute("CREATE DATABASE inventory")
+  cursor.close()
+
+  mydb = mysql.connector.connect(
+    host="mysqldb",
+    user="root",
+    password="p@ssw0rd1",
+    database="inventory"
+  )
+  cursor = mydb.cursor()
+
+  cursor.execute("DROP TABLE IF EXISTS widgets")
+  cursor.execute("CREATE TABLE widgets (name VARCHAR(255), description VARCHAR(255))")
+  cursor.close()
+
+  return 'init database'
+```
+
+```shell
+$ docker run \
+  --rm -d \
+  --network mysqlnet \
+  --name rest-server \
+  -p 5000:5000 \
+  python-docker
+  
+$ curl http://localhost:5000/initdb
+$ curl http://localhost:5000/widgets
+```
+
+```
+version: '3.8'
+
+services:
+ web:
+  build:
+   context: .
+  ports:
+  - 5000:5000
+  volumes:
+  - ./:/app
+
+ mysqldb:
+  image: mysql
+  ports:
+  - 3306:3306
+  environment:
+  - MYSQL_ROOT_PASSWORD=p@ssw0rd1
+  volumes:
+  - mysql:/var/lib/mysql
+  - mysql_config:/etc/mysql
+
+volumes:
+  mysql:
+  mysql_config:
+```
+
+##### Configuring CI/CD
+
+add DOCKER_HUB_USERNAME and DOCKER_HUB_ACCESS_TOKEN into GitHub secrets UI to ensure we can access Docker Hub from any workflow
+
+set up the GitHub actions workflow
+
+We need two Docker actions:
+
+1. The first action enables us to log in to Docker Hub using the secrets we stored in the GitHub Repository.
+2. The second one is the build and push action.
+
+To set up the workflow:
+
+1. Go to your repository in GitHub and then click **Actions** > **New workflow**.
+2. Click **set up a workflow yourself** and add the following content: name, branch, jubs, steps
+
+```
+name: CI to Docker Hub
+
+
+on:
+  push:
+    branches: [ main ]
+    
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    
+ steps:
+
+      - name: Check Out Repo 
+        uses: actions/checkout@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: ./
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/simplewhale:latest
+
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
+    
+```
 
 
 
