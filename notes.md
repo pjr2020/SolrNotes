@@ -1357,3 +1357,79 @@ Node.js will allow us to reuse the same code we’ve written in the browser in o
 let html = ReactDOM.renderToString(<Star />);
 ```
 
+### Java
+
+major advantage: write once and run on all devices
+
+better suited to development in the large
+
+new features: modules and interactive JShell
+
+##### Setting up Java environment
+
+The JRE (Java Runtime Environment) was, up until Java 8, a smaller download for end users. Since there is far less desktop Java than there once was, the JRE was eliminated in favor of `jlink` to make a custom download.
+
+The JDK or Java SDK download is the full development environment, which you’ll want if you’re going to be developing Java software.
+
+Using the command-line Java Development Kit (JDK) may be the best way to keep up with the very latest improvements in Java.
+
+```
+javac HelloWorld.java
+
+java HelloWorld
+```
+
+There is an optional setting called `CLASSPATH`, discussed in [Recipe 1.5](https://learning.oreilly.com/library/view/java-cookbook-4th/9781492072577/ch01.html#javacook-getstarted-SECT-4), that controls where Java looks for classes. 
+
+`CLASSPATH`, if set, is used by both *javac* and *java*.
+
+GraalVM
+
+better performance, mix and match programming languages
+
+or use IDEs
+
+##### JShell
+
+REPL interpreter of Java starting with Java 11
+
+tab for auto completion, double tab to see documentation
+
+##### CLASSPATH
+
+`CLASSPATH` is a list of class files in any of a number of directories, JAR files, or ZIP files.
+
+Java platform modules system JPMS: major feature in Java 9
+
+##### JVM
+
+JVM starts an interpreter for bytecode from the program, while production JVMs also provide a runtime compiler that will accelerate the important parts of the program by replacing them with equivalent compiled machine code.
+
+- Comprise a container for application code to run inside
+- Provide a secure and reliable execution environment as compared to C/C++
+- Take memory management out of the hands of developers
+- Provide a cross-platform execution environment
+- make use of runtime information to self-manage
+
+JVM collects runtime information to make better decisions about how to execute code.
+
+just-in-time (JIT) compilation
+
+In the HotSpot JVM (which was the JVM that Sun first shipped as part of Java 1.3, and is still in use today), the JVM first identifies which parts of the program are called most often—the “hot methods.” Then, the JVM compiles these hot methods directly into machine code, bypassing the JVM interpreter.
+
+##### Java security
+
+the architecture itself is strong and robust, without any security holes in the design(at least none that have been discovered yet).
+
+Fundamental to the design of the security model is that bytecode is heavily restricted in what it can express—there is no way, for example, to directly address memory.
+
+Furthermore, the VM goes through a process known as *bytecode* *verification* whenever it loads an untrusted class, which removes a further large class of problems
+
+For practical server-side coding, Java remains perhaps the most secure general-purpose platform currently available, especially when kept patched up to date.
+
+java is statically typed
+
+java is always pass-by-value (except objects)
+
+java is multithreaded compared to python
+
